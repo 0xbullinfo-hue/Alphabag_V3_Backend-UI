@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<!-- VERSION 12345 -->
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>AlphaBAG | Professional Crypto Intelligence</title>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- Inter Font for Sharpness -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Global polyfills for Web3/AI SDKs - Non-destructive augmentation
+    window.global = window;
+    window.process = window.process || {};
+    window.process.env = window.process.env || {};
+    window.process.env.NODE_ENV = window.process.env.NODE_ENV || 'production';
+    window.process.browser = true;
+    window.process.version = window.process.version || '';
+    window.process.nextTick = window.process.nextTick || ((cb) => setTimeout(cb, 0));
+
+    window.Buffer = window.Buffer || {
+      isBuffer: () => false,
+      from: (str, enc) => {
+        if (enc === 'base64') return { toString: () => btoa(str) };
+        return str;
+      }
+    };
+
+    // Tailwind Config
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            alphabag: {
+              black: "#000000",
+              dark: "#0B0E11",
+              darkgray: "#18181B",
+              gray: "#2B3139",
+              yellow: "#FCD535",
+              text: "#EAECEF",
+              subtext: "#848E9C",
+              muted: "#A1A1AA",
+              green: "#10B981",
+              red: "#EF4444",
+              border: "rgba(255, 255, 255, 0.12)",
+              'border-light': "rgba(255, 255, 255, 0.05)",
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/index.tsx"></script>
+</body>
+
+</html>
