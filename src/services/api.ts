@@ -41,9 +41,9 @@ api.interceptors.response.use(
             sessionStorage.removeItem('alphabag_token');
             sessionStorage.removeItem('alphabag_user');
             
-            // Redirect to landing if we are in a protected area
-            if (window.location.hash !== '#/' && window.location.hash !== '#/airdrop') {
-                window.location.hash = '#/';
+            // Redirect to admin login on auth expiry.
+            if (window.location.hash !== '#/admin-login') {
+                window.location.hash = '#/admin-login';
             }
         }
         return Promise.reject(error);
