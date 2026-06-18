@@ -1,5 +1,10 @@
 
 import type {
+  AdminActivityEntry as OpenAPIAdminActivityEntry,
+  AdminMissionStatusResponse as OpenAPIAdminMissionStatusResponse,
+  AdminStrikeLogEntry as OpenAPIAdminStrikeLogEntry,
+  AdminTokenRequest as OpenAPIAdminTokenRequest,
+  AdminWalletEntry as OpenAPIAdminWalletEntry,
   Mission as OpenAPIMission,
   MissionListResponse as OpenAPIMissionListResponse,
   TreasuryStatus as OpenAPITreasuryStatus,
@@ -56,69 +61,15 @@ export type MissionListResponse = OpenAPIMissionListResponse;
 
 export type TreasuryStatusResponse = OpenAPITreasuryStatus;
 
-export interface AdminMissionStatusResponse {
-  isPaused?: boolean;
-  tgeDate?: string;
-}
+export type AdminMissionStatusResponse = OpenAPIAdminMissionStatusResponse;
 
-export interface ParticipantEntry {
-  id: string;
-  email?: string;
-  wallet?: string;
-  submittedWallet?: string;
-  points?: number;
-  referralCount?: number;
-  accountType?: string;
-  reviewComment?: string;
-  isFounderRequest?: boolean;
-  projectName?: string;
-  projectTicker?: string;
-  projectManifesto?: string;
-  projectWebsite?: string;
-  projectSocial?: string;
-  projectContract?: string;
-  projectGoals?: string;
-  founderSocial?: string;
-}
+export type ParticipantEntry = OpenAPIAdminWalletEntry;
 
-export interface AdminActivityEntry {
-  id: string;
-  createdAt?: string;
-  pointsEarned?: number;
-  user?: {
-    id?: string;
-    email?: string;
-    verifiedWallet?: string;
-  };
-  mission?: {
-    title?: string;
-    type?: string;
-  };
-}
+export type AdminActivityEntry = OpenAPIAdminActivityEntry;
 
-export interface StrikeLogEntry {
-  id: string;
-  userId?: string;
-  reason?: string;
-  createdAt?: string;
-  issuedBy?: string;
-}
+export type StrikeLogEntry = OpenAPIAdminStrikeLogEntry;
 
-export interface TokenRequestEntry {
-  id: string;
-  userId?: string;
-  expectedTokens?: number;
-  walletAddress?: string;
-  status: 'PENDING' | 'APPROVED' | 'SENT' | 'REJECTED';
-  createdAt?: string;
-  sentAt?: string;
-  txReference?: string;
-  user?: {
-    id?: string;
-    email?: string;
-    verifiedWallet?: string;
-  };
-}
+export type TokenRequestEntry = OpenAPIAdminTokenRequest;
 
 export type Chain = 'BSC' | 'ETH' | 'SOL' | 'BASE' | 'AVAX' | 'ARB';
 

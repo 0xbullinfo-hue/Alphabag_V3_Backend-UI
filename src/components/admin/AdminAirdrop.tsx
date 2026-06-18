@@ -9,7 +9,21 @@ import {
     Eye, ShieldCheck, UserCheck, Trash
 } from 'lucide-react';
 import { AdminActivityEntry, AdminMissionStatusResponse, ParticipantEntry, StrikeLogEntry, TokenRequestEntry } from '../../types';
-import type { Mission, MissionListResponse, TreasuryStatus } from '../../types/openapi-contracts';
+import type {
+    AdjustTreasuryRequest,
+    AdjustTreasuryResponse,
+    ApproveTokenRequestRequest,
+    ApproveTokenRequestResponse,
+    GenericSuccessResponse,
+    MarkDoneRequest,
+    Mission,
+    MissionListResponse,
+    PauseMissionRequest,
+    PauseMissionResponse,
+    TgeDateRequest,
+    TgeDateResponse,
+    TreasuryStatus,
+} from '../../types/openapi-contracts';
 import Swal from 'sweetalert2';
 
 export const AdminAirdrop: React.FC = () => {
@@ -58,7 +72,7 @@ export const AdminAirdrop: React.FC = () => {
         setIsLoading(true);
         try {
             // Fetch configuration/treasury stats on mount or mode change
-            const resTreasury = await api.get<TreasuryStatusResponse>('/api/v1/t2e/treasury-status');
+            const resTreasury = await api.get<TreasuryStatus>('/api/v1/t2e/treasury-status');
             setTreasury(resTreasury.data);
             if (resTreasury.data) {
                 setMinClaim(resTreasury.data.minimumClaimBalance?.toString() || '500');
@@ -130,12 +144,12 @@ export const AdminAirdrop: React.FC = () => {
             
             // Synchronize all campaign activation properties in parallel
             await Promise.all([
-                api.post('/api/airdrop/admin/tge-date', { tgeDate: isoDate }),
-                api.patch('/api/v1/t2e/admin/adjust-balance', {
+                api.post<TgeDateResponse>('/api/airdrop/admin/tge-date', { tgeDate: isoDate } satisfies TgeDateRequest),
+                api.patch<AdjustTreasuryResponse>('/api/v1/t2e/admin/adjust-balance', {
                     minimumClaimBalance: parseInt(minClaim),
                     itemsToBagRate: itemsToBagRate === '' ? null : parseFloat(itemsToBagRate),
                     campaignEnded: false
-                }),
+                } satisfies AdjustTreasuryRequest),
                 api.post('/api/airdrop/admin/campaigns', {
                     tokenTicker,
                     pointsPerClaim: genesisReward,
@@ -165,11 +179,11 @@ export const AdminAirdrop: React.FC = () => {
     const handleSaveT2EConfig = async (e?: any, campaignEnded?: boolean) => {
         setIsLoading(true);
         try {
-            const res = await api.patch('/api/v1/t2e/admin/adjust-balance', {
+            const res = await api.patch<AdjustTreasuryResponse>('/api/v1/t2e/admin/adjust-balance', {
                 minimumClaimBalance: parseInt(minClaim),
                 itemsToBagRate: itemsToBagRate === '' ? null : parseFloat(itemsToBagRate),
                 ...(campaignEnded !== undefined ? { campaignEnded } : {})
-            });
+            } satisfies AdjustTreasuryRequest);
             if (res.data.success) {
                 if (campaignEnded) {
                     Swal.fire({ title: 'CAMPAIGN ENDED', text: 'Conversions have been halted.', icon: 'warning', background: '#0a0a0a', color: '#fff' });
@@ -201,7 +215,7 @@ export const AdminAirdrop: React.FC = () => {
         });
         if (result.isConfirmed) {
             try {
-                const res = await api.post('/api/airdrop/admin/pause-mission', { paused: !missionPaused });
+                const res = await api.post<PauseMissionResponse>('/api/airdrop/admin/pause-mission', { paused: !missionPaused } satisfies PauseMissionRequest);
                 setMissionPaused(res.data.isPaused);
                 Swal.fire({ title: res.data.message, icon: 'success', background: '#0a0a0a', color: '#fff' });
             } catch (error) {
@@ -524,7 +538,7 @@ export const AdminAirdrop: React.FC = () => {
 
         if (result.isConfirmed) {
             try {
-                const res = await api.post(`/api/v1/t2e/admin/token-requests/${id}/approve`, { status: decision });
+                const res = await api.post<ApproveTokenRequestResponse>(`/api/v1/t2e/admin/token-requests/${id}/approve`, { status: decision } satisfies ApproveTokenRequestRequest);
                 Swal.fire({
                     title: isApprove ? 'PAYOUT APPROVED' : 'REQUEST DENIED',
                     html: isApprove ? `<p class="text-xs text-zinc-400">Status updated to APPROVED</p>` : `<p class="text-xs text-zinc-400">Request has been marked as rejected.</p>`,
@@ -554,7 +568,7 @@ export const AdminAirdrop: React.FC = () => {
         });
         if (!result.isConfirmed) return;
         try {
-            await api.post(`/api/v1/t2e/admin/token-requests/${id}/mark-done`, { txReference: result.value || null });
+            await api.post<GenericSuccessResponse>(`/api/v1/t2e/admin/token-requests/${id}/mark-done`, { txReference: result.value || null } satisfies MarkDoneRequest);
             Swal.fire({ title: 'MARKED AS SENT', text: 'User dashboard will now show reward delivered.', icon: 'success', background: '#0a0a0a', color: '#fff', confirmButtonColor: '#fcd535' });
             fetchData();
         } catch (err: any) {
@@ -576,7 +590,7 @@ export const AdminAirdrop: React.FC = () => {
         if (!result.isConfirmed) return;
         setIsLoading(true);
         try {
-            await api.post('/api/v1/t2e/admin/token-requests/approve-all', {});
+            await api.post<GenericSuccessResponse>('/api/v1/t2e/admin/token-requests/approve-all', {});
             Swal.fire('SUCCESS', 'All pending requests have been approved.', 'success');
             fetchData();
         } catch (error: any) {
@@ -600,7 +614,7 @@ export const AdminAirdrop: React.FC = () => {
         if (!result.isConfirmed) return;
         setIsLoading(true);
         try {
-            await api.post('/api/v1/t2e/admin/token-requests/mark-all-done', {});
+            await api.post<GenericSuccessResponse>('/api/v1/t2e/admin/token-requests/mark-all-done', {});
             Swal.fire('SUCCESS', 'All approved payouts have been marked as SENT.', 'success');
             fetchData();
         } catch (error: any) {

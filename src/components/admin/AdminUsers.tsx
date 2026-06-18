@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Server, Shield, AlertTriangle, Ban, CheckCircle2, RefreshCw, ShieldAlert } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { api } from '../../services/api';
+import type { StrikeRequest, StrikeResponse, UnbanRequest, UnbanResponse } from '../../types/openapi-contracts';
 import Swal from 'sweetalert2';
 
 interface UserData {
@@ -47,7 +48,8 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ users, onRefresh }) => {
 
         setLoadingId(userId);
         try {
-            const res = await api.post('/api/airdrop/admin/strike', { userId, reason: result.value || 'Protocol violation' });
+            const strikePayload: StrikeRequest = { userId, reason: result.value || 'Protocol violation' };
+            const res = await api.post<StrikeResponse>('/api/airdrop/admin/strike', strikePayload);
             await Swal.fire({
                 title: res.data.isBanned ? '⛔ USER BANNED' : '⚠️ STRIKE ISSUED',
                 text: res.data.message,
@@ -79,7 +81,8 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ users, onRefresh }) => {
 
         setLoadingId(userId);
         try {
-            await api.post('/api/airdrop/admin/unban', { userId });
+            const unbanPayload: UnbanRequest = { userId };
+            await api.post<UnbanResponse>('/api/airdrop/admin/unban', unbanPayload);
             Swal.fire({ title: 'MEMBER REINSTATED', text: 'Account restored. Strikes reset to 0.', icon: 'success', background: '#0a0a0a', color: '#fff', confirmButtonColor: '#fcd535' });
             onRefresh?.();
         } catch (e: any) {
