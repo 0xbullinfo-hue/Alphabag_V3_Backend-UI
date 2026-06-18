@@ -8,12 +8,13 @@ import {
     XCircle, DollarSign, BarChart3, Settings, AlertCircle,
     Eye, ShieldCheck, UserCheck, Trash
 } from 'lucide-react';
-import { AdminActivityEntry, AdminMissionStatusResponse, MissionListResponse, MissionTask, ParticipantEntry, StrikeLogEntry, TokenRequestEntry, TreasuryStatusResponse } from '../../types';
+import { AdminActivityEntry, AdminMissionStatusResponse, ParticipantEntry, StrikeLogEntry, TokenRequestEntry } from '../../types';
+import type { Mission, MissionListResponse, TreasuryStatus } from '../../types/openapi-contracts';
 import Swal from 'sweetalert2';
 
 export const AdminAirdrop: React.FC = () => {
     // Shared State
-    const [tasks, setTasks] = useState<MissionTask[]>([]);
+    const [tasks, setTasks] = useState<Mission[]>([]);
     const [participants, setParticipants] = useState<ParticipantEntry[]>([]);
     const [viewMode, setViewMode] = useState<'campaign' | 'missions' | 'proofs' | 'founders' | 'payouts'>('campaign');
     const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +35,7 @@ export const AdminAirdrop: React.FC = () => {
     });
 
     // Campaign Configuration State
-    const [treasury, setTreasury] = useState<TreasuryStatusResponse | null>(null);
+    const [treasury, setTreasury] = useState<TreasuryStatus | null>(null);
     const [minClaim, setMinClaim] = useState<string>('500');
     const [itemsToBagRate, setItemsToBagRate] = useState<string>('10');
     const [tokenTicker, setTokenTicker] = useState('BAG');
@@ -49,7 +50,7 @@ export const AdminAirdrop: React.FC = () => {
     const [requests, setRequests] = useState<TokenRequestEntry[]>([]);
     const [selectedRequestIds, setSelectedRequestIds] = useState<string[]>([]);
 
-    const parseMissionResponse = (data: MissionTask[] | MissionListResponse): MissionTask[] => {
+    const parseMissionResponse = (data: Mission[] | MissionListResponse): Mission[] => {
         return Array.isArray(data) ? data : (data.missions || []);
     };
 
@@ -76,7 +77,7 @@ export const AdminAirdrop: React.FC = () => {
 
             // Fetch specific view data
             if (viewMode === 'missions') {
-                const resTasks = await api.get<MissionTask[] | MissionListResponse>('/api/airdrop/admin/tasks');
+                const resTasks = await api.get<Mission[] | MissionListResponse>('/api/airdrop/admin/tasks');
                 setTasks(parseMissionResponse(resTasks.data));
             } else if (viewMode === 'proofs') {
                 const [resParts, resAct, resStrikes] = await Promise.all([
