@@ -8,12 +8,13 @@ import {
     XCircle, DollarSign, BarChart3, Settings, AlertCircle,
     Eye, ShieldCheck, UserCheck, Trash
 } from 'lucide-react';
+import { AdminActivityEntry, AdminMissionStatusResponse, MissionListResponse, MissionTask, ParticipantEntry, StrikeLogEntry, TokenRequestEntry, TreasuryStatusResponse } from '../../types';
 import Swal from 'sweetalert2';
 
 export const AdminAirdrop: React.FC = () => {
     // Shared State
-    const [tasks, setTasks] = useState<any[]>([]);
-    const [participants, setParticipants] = useState<any[]>([]);
+    const [tasks, setTasks] = useState<MissionTask[]>([]);
+    const [participants, setParticipants] = useState<ParticipantEntry[]>([]);
     const [viewMode, setViewMode] = useState<'campaign' | 'missions' | 'proofs' | 'founders' | 'payouts'>('campaign');
     const [isLoading, setIsLoading] = useState(false);
     const [missionPaused, setMissionPaused] = useState(false);
@@ -33,7 +34,7 @@ export const AdminAirdrop: React.FC = () => {
     });
 
     // Campaign Configuration State
-    const [treasury, setTreasury] = useState<any>(null);
+    const [treasury, setTreasury] = useState<TreasuryStatusResponse | null>(null);
     const [minClaim, setMinClaim] = useState<string>('500');
     const [itemsToBagRate, setItemsToBagRate] = useState<string>('10');
     const [tokenTicker, setTokenTicker] = useState('BAG');
@@ -41,18 +42,22 @@ export const AdminAirdrop: React.FC = () => {
     const [phaseDuration, setPhaseDuration] = useState(10);
 
     // Verification Desk State
-    const [activity, setActivity] = useState<any[]>([]);
-    const [strikeLogs, setStrikeLogs] = useState<any[]>([]);
+    const [activity, setActivity] = useState<AdminActivityEntry[]>([]);
+    const [strikeLogs, setStrikeLogs] = useState<StrikeLogEntry[]>([]);
 
     // Airdrop Queue State
-    const [requests, setRequests] = useState<any[]>([]);
+    const [requests, setRequests] = useState<TokenRequestEntry[]>([]);
     const [selectedRequestIds, setSelectedRequestIds] = useState<string[]>([]);
+
+    const parseMissionResponse = (data: MissionTask[] | MissionListResponse): MissionTask[] => {
+        return Array.isArray(data) ? data : (data.missions || []);
+    };
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
             // Fetch configuration/treasury stats on mount or mode change
-            const resTreasury = await api.get('/api/v1/t2e/treasury-status');
+            const resTreasury = await api.get<TreasuryStatusResponse>('/api/v1/t2e/treasury-status');
             setTreasury(resTreasury.data);
             if (resTreasury.data) {
                 setMinClaim(resTreasury.data.minimumClaimBalance?.toString() || '500');
@@ -60,7 +65,7 @@ export const AdminAirdrop: React.FC = () => {
             }
 
             // Fetch general mission status (TGE countdown, paused)
-            const resStatus = await api.get('/api/airdrop/admin/mission-status');
+            const resStatus = await api.get<AdminMissionStatusResponse>('/api/airdrop/admin/mission-status');
             setMissionPaused(!!resStatus.data.isPaused);
             if (resStatus.data.tgeDate) {
                 const dt = new Date(resStatus.data.tgeDate);
@@ -71,22 +76,22 @@ export const AdminAirdrop: React.FC = () => {
 
             // Fetch specific view data
             if (viewMode === 'missions') {
-                const resTasks = await api.get('/api/airdrop/admin/tasks');
-                setTasks(Array.isArray(resTasks.data) ? resTasks.data : (resTasks.data.missions || []));
+                const resTasks = await api.get<MissionTask[] | MissionListResponse>('/api/airdrop/admin/tasks');
+                setTasks(parseMissionResponse(resTasks.data));
             } else if (viewMode === 'proofs') {
                 const [resParts, resAct, resStrikes] = await Promise.all([
-                    api.get('/api/airdrop/admin/wallets'),
-                    api.get('/api/v1/t2e/admin/activity'),
-                    api.get('/api/airdrop/admin/strikes')
+                    api.get<ParticipantEntry[]>('/api/airdrop/admin/wallets'),
+                    api.get<AdminActivityEntry[]>('/api/v1/t2e/admin/activity'),
+                    api.get<StrikeLogEntry[]>('/api/airdrop/admin/strikes')
                 ]);
                 setParticipants(resParts.data || []);
                 setActivity(resAct.data || []);
                 setStrikeLogs(resStrikes.data || []);
             } else if (viewMode === 'founders') {
-                const resParts = await api.get('/api/airdrop/admin/wallets');
+                const resParts = await api.get<ParticipantEntry[]>('/api/airdrop/admin/wallets');
                 setParticipants(resParts.data || []);
             } else if (viewMode === 'payouts') {
-                const resReqs = await api.get('/api/v1/t2e/admin/token-requests');
+                const resReqs = await api.get<TokenRequestEntry[]>('/api/v1/t2e/admin/token-requests');
                 setRequests(resReqs.data || []);
                 setSelectedRequestIds([]);
             }

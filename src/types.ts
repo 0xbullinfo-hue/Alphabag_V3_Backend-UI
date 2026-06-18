@@ -35,9 +35,109 @@ export interface User {
   referralCode?: string;
   referralCount?: number;
   completedTasks?: string[];
+  completedMissions?: string[];
+  items?: number;
   lastDailyTaskAt?: string;
+  lastWeeklyTaskAt?: string;
+  strikes?: number;
   bannerUrl?: string;
   logoUrl?: string;
+}
+
+export interface MissionTask {
+  id: string;
+  title: string;
+  description?: string;
+  rewardTokens?: number;
+  type?: string;
+  frequency?: string;
+  status?: string;
+  requiresLink?: boolean;
+  requiresFeedback?: boolean;
+  actionUrl?: string;
+}
+
+export interface MissionListResponse {
+  missions: MissionTask[];
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+}
+
+export interface TreasuryStatusResponse {
+  minimumClaimBalance?: number;
+  itemsToBagRate?: number;
+  campaignEnded?: boolean;
+  intelligence?: {
+    totalEarned?: number;
+    totalPending?: number;
+    totalDisbursed?: number;
+  };
+}
+
+export interface AdminMissionStatusResponse {
+  isPaused?: boolean;
+  tgeDate?: string;
+}
+
+export interface ParticipantEntry {
+  id: string;
+  email?: string;
+  wallet?: string;
+  submittedWallet?: string;
+  points?: number;
+  referralCount?: number;
+  accountType?: string;
+  reviewComment?: string;
+  isFounderRequest?: boolean;
+  projectName?: string;
+  projectTicker?: string;
+  projectManifesto?: string;
+  projectWebsite?: string;
+  projectSocial?: string;
+  projectContract?: string;
+  projectGoals?: string;
+  founderSocial?: string;
+}
+
+export interface AdminActivityEntry {
+  id: string;
+  createdAt?: string;
+  pointsEarned?: number;
+  user?: {
+    id?: string;
+    email?: string;
+    verifiedWallet?: string;
+  };
+  mission?: {
+    title?: string;
+    type?: string;
+  };
+}
+
+export interface StrikeLogEntry {
+  id: string;
+  userId?: string;
+  reason?: string;
+  createdAt?: string;
+  issuedBy?: string;
+}
+
+export interface TokenRequestEntry {
+  id: string;
+  userId?: string;
+  expectedTokens?: number;
+  walletAddress?: string;
+  status: 'PENDING' | 'APPROVED' | 'SENT' | 'REJECTED';
+  createdAt?: string;
+  sentAt?: string;
+  txReference?: string;
+  user?: {
+    id?: string;
+    email?: string;
+    verifiedWallet?: string;
+  };
 }
 
 export type Chain = 'BSC' | 'ETH' | 'SOL' | 'BASE' | 'AVAX' | 'ARB';
