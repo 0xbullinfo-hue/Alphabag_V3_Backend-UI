@@ -1,4 +1,10 @@
 
+import type {
+  Mission as OpenAPIMission,
+  MissionListResponse as OpenAPIMissionListResponse,
+  TreasuryStatus as OpenAPITreasuryStatus,
+} from './types/openapi-contracts';
+
 export interface Coin {
   id: string;
   symbol: string;
@@ -44,37 +50,11 @@ export interface User {
   logoUrl?: string;
 }
 
-export interface MissionTask {
-  id: string;
-  title: string;
-  description?: string;
-  rewardTokens?: number;
-  type?: string;
-  frequency?: string;
-  status?: string;
-  requiresLink?: boolean;
-  requiresFeedback?: boolean;
-  actionUrl?: string;
-}
+export type MissionTask = OpenAPIMission;
 
-export interface MissionListResponse {
-  missions: MissionTask[];
-  total?: number;
-  page?: number;
-  limit?: number;
-  totalPages?: number;
-}
+export type MissionListResponse = OpenAPIMissionListResponse;
 
-export interface TreasuryStatusResponse {
-  minimumClaimBalance?: number;
-  itemsToBagRate?: number;
-  campaignEnded?: boolean;
-  intelligence?: {
-    totalEarned?: number;
-    totalPending?: number;
-    totalDisbursed?: number;
-  };
-}
+export type TreasuryStatusResponse = OpenAPITreasuryStatus;
 
 export interface AdminMissionStatusResponse {
   isPaused?: boolean;
