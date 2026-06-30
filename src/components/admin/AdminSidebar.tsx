@@ -37,7 +37,8 @@ export const AdminSidebar: React.FC = () => {
     // Let's assume Admin.tsx manages the "view" state for now to avoid routing complexity if not set up.
     // Actually, let's use query params: ?view=overview, ?view=users, etc.
     const query = new URLSearchParams(location.search);
-    const currentView = query.get('view') || 'overview';
+    const isProjectsActive = location.pathname === '/admin/projects';
+    const currentView = isProjectsActive ? '' : (query.get('view') || 'overview');
 
     const handleLogout = () => {
         logout();
@@ -63,6 +64,7 @@ export const AdminSidebar: React.FC = () => {
                         Main Operations
                     </div>
                     <NavItem to="/admin?view=overview" icon={Home} label="Overview" active={currentView === 'overview'} />
+                    <NavItem to="/admin/projects" icon={Shield} label="Projects Control" active={isProjectsActive} />
                     <NavItem to="/admin?view=users" icon={Users} label="Registered Member Database" active={currentView === 'users'} />
                     <NavItem to="/admin?view=whales" icon={Activity} label="Whale Watch" active={currentView === 'whales'} />
 

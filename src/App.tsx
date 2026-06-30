@@ -36,7 +36,7 @@ const AdminRoute = ({ children }: React.PropsWithChildren<{}>) => {
   const { user, isAuthenticated, isLoading } = useAuth();
   if (isLoading) return <GlobalLoader />;
   if (!isAuthenticated || !user?.isAdmin) {
-    return <Navigate to="/admin-login" replace />;
+    return <Navigate to="/" replace />;
   }
   return <>{children}</>;
 };
@@ -49,11 +49,11 @@ const AppContent = () => {
       <Routes>
         <Route path="/" element={
           isLoading ? <GlobalLoader /> :
-          (isAuthenticated && user?.isAdmin) ? <Navigate to="/admin" replace /> : <Navigate to="/admin-login" replace />
+          (isAuthenticated && user?.isAdmin) ? <Navigate to="/admin" replace /> : <AdminLogin />
         } />
         <Route path="/admin" element={<AdminRoute><Admin /></AdminRoute>} />
         <Route path="/admin/projects" element={<AdminRoute><AdminProjectDashboard /></AdminRoute>} />
-        <Route path="/admin-login" element={<AdminLogin />} />
+        <Route path="/admin-login" element={<Navigate to="/" replace />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>

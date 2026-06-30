@@ -110,16 +110,38 @@ export class AlphaRadarService {
      * Admin: Update Project Status
      */
     static async updateProjectStatus(projectId: string, status: 'PENDING' | 'APPROVED' | 'REJECTED', verify: boolean = false) {
-        console.log(`Updating project ${projectId} to ${status} (Verified: ${verify})`);
-        return { success: true };
+        try {
+            const response = await api.put(`/api/admin/projects/${projectId}`, { status, isVerified: verify });
+            return response.data;
+        } catch (error) {
+            console.error("Update status error:", error);
+            try {
+                const response = await api.put(`/api/projects/${projectId}`, { status, isVerified: verify });
+                return response.data;
+            } catch (fallbackError) {
+                console.error("Fallback update status error:", fallbackError);
+                return { success: false, error: "Network error" };
+            }
+        }
     }
 
     /**
      * Admin: Ad Promotion
      */
     static async promoteProjectToAd(projectId: string, placement: 'SIDEBAR' | 'TIMELINE' | 'BOTH') {
-        console.log(`Promoting project ${projectId} to AD with placement: ${placement}`);
-        return { success: true };
+        try {
+            const response = await api.post(`/api/admin/projects/${projectId}/promote`, { placement });
+            return response.data;
+        } catch (error) {
+            console.error("Promote to ad error:", error);
+            try {
+                const response = await api.post(`/api/projects/${projectId}/promote`, { placement });
+                return response.data;
+            } catch (fallbackError) {
+                console.error("Fallback promote to ad error:", fallbackError);
+                return { success: false, error: "Network error" };
+            }
+        }
     }
 
     /**

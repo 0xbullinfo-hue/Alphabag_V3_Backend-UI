@@ -42,8 +42,8 @@ api.interceptors.response.use(
             sessionStorage.removeItem('alphabag_user');
             
             // Redirect to admin login on auth expiry.
-            if (window.location.hash !== '#/admin-login') {
-                window.location.hash = '#/admin-login';
+            if (window.location.hash !== '#/' && window.location.hash !== '') {
+                window.location.hash = '#/';
             }
         }
         return Promise.reject(error);

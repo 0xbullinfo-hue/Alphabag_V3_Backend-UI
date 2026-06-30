@@ -52,8 +52,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Admin status is evaluated entirely on the server side via JWT roles.
   const siweLogin = async (address: string, signature: string, message: string) => {
     try {
-      setIsLoading(true);
-      
       // Get referral code if exists
       const refCode = sessionStorage.getItem('alphabag_ref_code');
       
@@ -69,7 +67,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(res.data.token);
         sessionStorage.setItem('alphabag_token', res.data.token);
         sessionStorage.setItem('alphabag_user', JSON.stringify(res.data.user));
-        setIsLoading(false);
         return true;
       }
       return false;
@@ -79,14 +76,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } else {
         console.error("SIWE Network Error:", e.message);
       }
-      setIsLoading(false);
       throw e;
     }
   };
 
   const emailLogin = async (email: string, password: string, portal: 'main' | 'admin' = 'main') => {
     try {
-      setIsLoading(true);
       const res = await api.post('/api/auth/login', { email, password, portal });
 
       if (res.data.user && res.data.token) {
@@ -94,12 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(res.data.token);
         sessionStorage.setItem('alphabag_token', res.data.token);
         sessionStorage.setItem('alphabag_user', JSON.stringify(res.data.user));
-        setIsLoading(false);
         return true;
       }
       return false;
     } catch (e: any) {
-      setIsLoading(false);
       throw e;
     }
   };
@@ -127,25 +120,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       } finally {
         setIsLoading(false);
       }
-    } else if (import.meta.env.DEV) {
-      // Dev mode: dynamic auto-login as Admin
-      const mockAdminUser = {
-        id: "0x42916a998c6bff7f36be61749bd1bba9f473db96",
-        email: "admin@alphabagpro.com",
-        verifiedWallet: "0x42916A998c6Bff7F36bE61749Bd1BBA9f473dB96",
-        isAdmin: true,
-        tier: "ULTIMATE" as const,
-        onboardingComplete: true,
-        alphaAiUsageSeconds: 0,
-        lastAlphaAiReset: new Date().toISOString()
-      };
-      const mockToken = "wallet-auth:0x42916A998c6Bff7F36bE61749Bd1BBA9f473dB96";
-      sessionStorage.setItem('alphabag_user', JSON.stringify(mockAdminUser));
-      sessionStorage.setItem('alphabag_token', mockToken);
-      setUser(mockAdminUser);
-      setToken(mockToken);
-      console.log("[DEV] Auto-logged in as Mock ADMIN");
-      setIsLoading(false);
     } else {
       setIsLoading(false);
     }

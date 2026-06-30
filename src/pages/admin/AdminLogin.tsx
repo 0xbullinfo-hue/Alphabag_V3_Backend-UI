@@ -34,9 +34,16 @@ export const AdminLogin: React.FC = () => {
       const success = await emailLogin(email, password, 'admin');
       if (success) {
         navigate('/admin');
+      } else {
+        setError('Authentication failed. Invalid admin credentials.');
       }
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message || 'Login failed');
+      setError(
+        err.response?.data?.error || 
+        err.response?.data?.message || 
+        err.message || 
+        'Login failed'
+      );
     } finally {
       setLoading(false);
     }
