@@ -82,17 +82,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const emailLogin = async (email: string, password: string, portal: 'main' | 'admin' = 'main') => {
     try {
-      const res = await api.post('/api/auth/login', { email, password, portal });
+      setIsLoading(true);
+      const res = await api.post('/api/auth/login', {
+        email,
+        password,
+        portal,
+        // See ADMIN_PORTAL_KEY on the backend (config/env.js) — required
+        // for portal:'admin' logins. NOTE: because this app is a static
+        // SPA with no server of its own, this value is still visible in
+        // this app's own compiled JS bundle to anyone who inspects it
+        // directly. It raises the bar (an attacker needs to specifically
+        // find and inspect this admin panel, not just the main public
+        // frontend, where the 'admin' portal string alone is already
+        // visible) but it does NOT replace restricting this admin panel's
+        // hosting to a known host/IP range or VPN — that still needs to
+        // be configured at the infrastructure level for this check to
+        // mean anything against a targeted attacker.
+        adminPortalKey: import.meta.env.VITE_ADMIN_PORTAL_KEY,
+      });
 
       if (res.data.user && res.data.token) {
         setUser(res.data.user);
         setToken(res.data.token);
         sessionStorage.setItem('alphabag_token', res.data.token);
         sessionStorage.setItem('alphabag_user', JSON.stringify(res.data.user));
+        setIsLoading(false);
         return true;
       }
       return false;
     } catch (e: any) {
+      setIsLoading(false);
       throw e;
     }
   };
