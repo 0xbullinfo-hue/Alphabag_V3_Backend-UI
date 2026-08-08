@@ -15,6 +15,7 @@ import { AdminSignals } from '../../components/admin/AdminSignals';
 import { AdminSystem } from '../../components/admin/AdminSystem';
 import { AdminAirdrop } from '../../components/admin/AdminAirdrop';
 import { AdminWhales } from '../../components/admin/AdminWhales';
+import { AdminSeoAeo } from '../../components/admin/AdminSeoAeo';
 
 export const Admin: React.FC = () => {
     const { user, token } = useAuth();
@@ -72,6 +73,8 @@ export const Admin: React.FC = () => {
                 return <AdminAirdrop />;
             case 'whales':
                 return <AdminWhales />;
+            case 'seo':
+                return <AdminSeoAeo />;
             case 'system':
                 return <AdminSystem onReboot={fetchAllData} />;
             default:
@@ -97,6 +100,7 @@ export const Admin: React.FC = () => {
                                                 currentView === 'airdrop' ? 'Missions Control' :
                                                 currentView === 't2e' ? 'T2E Infrastructure' :
                                                     currentView === 'whales' ? 'Whale Watch' :
+                                                        currentView === 'seo' ? 'SEO + AEO Operations' :
                                                         'System Integrity'}
                             </h1>
                             <p className="text-alphabag-subtext mt-0.5 text-[12px] font-bold tracking-wide">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, Users, Radio, Newspaper, Activity, LogOut, Shield, Zap, TrendingUp } from 'lucide-react';
+import { Home, Users, Radio, Newspaper, Activity, LogOut, Shield, Zap, TrendingUp, Search } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
@@ -74,6 +74,11 @@ export const AdminSidebar: React.FC = () => {
                     <NavItem to="/admin?view=news" icon={Newspaper} label="Newsroom" active={currentView === 'news'} />
                     <NavItem to="/admin?view=signals" icon={Radio} label="Alpha Signals" active={currentView === 'signals'} />
                     <NavItem to="/admin?view=airdrop" icon={Zap} label="Campaign & Missions" active={currentView === 'airdrop'} />
+
+                    <div className="px-6 mb-2 mt-6 text-[10px] font-black text-alphabag-subtext uppercase tracking-widest opacity-50">
+                        Search Operations
+                    </div>
+                    <NavItem to="/admin?view=seo" icon={Search} label="SEO + AEO Ops" active={currentView === 'seo'} />
 
                     <div className="px-6 mb-2 mt-6 text-[10px] font-black text-alphabag-subtext uppercase tracking-widest opacity-50">
                         System
