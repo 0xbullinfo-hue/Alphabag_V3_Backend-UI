@@ -16,6 +16,15 @@ type SeoTask = {
     notes: string;
 };
 
+type AuditEntry = {
+    id: string;
+    adminId?: string | null;
+    adminEmail: string;
+    action: string;
+    changedSections: string[];
+    createdAt: string;
+};
+
 type OpsState = {
     objectives: string;
     entityCanon: string;
@@ -152,6 +161,7 @@ const icons: Record<WorkstreamKey, React.ReactNode> = {
 
 export const AdminSeoAeo: React.FC = () => {
     const [state, setState] = useState<OpsState>(DEFAULT_STATE);
+    const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
     const [lastSavedAt, setLastSavedAt] = useState<string>('');
     const [isHydrating, setIsHydrating] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -160,8 +170,12 @@ export const AdminSeoAeo: React.FC = () => {
     useEffect(() => {
         const hydrate = async () => {
             try {
-                const response = await api.get('/api/admin/seo-aeo-workspace');
-                const remote = response.data;
+                const [workspaceResponse, auditResponse] = await Promise.all([
+                    api.get('/api/admin/seo-aeo-workspace'),
+                    api.get('/api/admin/seo-aeo-workspace/audit')
+                ]);
+                const remote = workspaceResponse.data;
+                setAuditEntries(Array.isArray(auditResponse.data) ? auditResponse.data : []);
                 if (remote && Object.keys(remote).length > 0) {
                     setState((prev) => ({ ...prev, ...remote }));
                     localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...DEFAULT_STATE, ...remote }));
@@ -198,6 +212,8 @@ export const AdminSeoAeo: React.FC = () => {
             const workspace = response.data?.workspace || state;
             setState((prev) => ({ ...prev, ...workspace }));
             localStorage.setItem(STORAGE_KEY, JSON.stringify(workspace));
+            const auditResponse = await api.get('/api/admin/seo-aeo-workspace/audit');
+            setAuditEntries(Array.isArray(auditResponse.data) ? auditResponse.data : []);
             setLastSavedAt(new Date().toLocaleString());
             setSaveMessage('Synced to backend workspace');
         } catch (error) {
@@ -354,6 +370,45 @@ export const AdminSeoAeo: React.FC = () => {
                         </div>
                     </div>
                 ))}
+            </div>
+
+            <div className="bg-alphabag-dark border border-alphabag-gray rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-5">
+                    <div className="w-10 h-10 rounded-xl bg-alphabag-black/50 border border-alphabag-gray flex items-center justify-center">
+                        <Bot size={18} className="text-alphabag-yellow" />
+                    </div>
+                    <div>
+                        <h2 className="font-black text-lg uppercase tracking-[0.18em] text-white">Recent Workspace Activity</h2>
+                        <p className="text-xs text-alphabag-subtext font-bold tracking-wide">Audit trail for SEO / AEO workspace saves across the admin team.</p>
+                    </div>
+                </div>
+
+                <div className="space-y-3">
+                    {auditEntries.length === 0 ? (
+                        <div className="border border-dashed border-alphabag-gray rounded-2xl px-4 py-6 text-sm text-alphabag-subtext">
+                            No workspace save history yet.
+                        </div>
+                    ) : auditEntries.map((entry) => (
+                        <div key={entry.id} className="border border-alphabag-gray/60 rounded-2xl bg-alphabag-black/30 p-4">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                                <div>
+                                    <p className="text-sm font-black text-white">{entry.adminEmail}</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-alphabag-subtext mt-1">{entry.action.replaceAll('_', ' ')}</p>
+                                </div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-alphabag-subtext">
+                                    {new Date(entry.createdAt).toLocaleString()}
+                                </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2 mt-3">
+                                {(entry.changedSections || []).length === 0 ? (
+                                    <span className="px-2 py-1 rounded border border-alphabag-gray text-[10px] font-black uppercase tracking-[0.16em] text-alphabag-subtext">No section diff detected</span>
+                                ) : entry.changedSections.map((section) => (
+                                    <span key={section} className="px-2 py-1 rounded border border-alphabag-yellow/30 bg-alphabag-yellow/10 text-[10px] font-black uppercase tracking-[0.16em] text-alphabag-yellow">{section}</span>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 bg-alphabag-dark border border-alphabag-gray rounded-2xl p-5">
