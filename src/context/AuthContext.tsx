@@ -1,3 +1,11 @@
+// SPDX-License-Identifier: MIT
+// PATCH: AuthContext.tsx — Secure session restoration
+// Fixes:
+//   1. Validates stored token via /api/auth/me on mount before restoring session
+//   2. Only restores admin session if backend confirms isAdmin
+//   3. Auto-clears invalid/expired sessions
+//   4. Shows loading state during validation to prevent UI flash
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '../types';
 import { useAccount, useDisconnect, useBalance } from 'wagmi';
@@ -30,7 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { disconnect } = useDisconnect();
 
   const tokenAddress = TOKEN_GATING_CONFIG.BAG_TOKEN_ADDRESS_TESTNET || TOKEN_GATING_CONFIG.BAG_TOKEN_ADDRESS_MAINNET || '0x0000000000000000000000000000000000000000';
-  
+
   useBalance({
     address: address,
     token: tokenAddress as `0x${string}`,
@@ -38,10 +46,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     watch: true
   });
 
+  // ── SECURE SESSION RESTORATION ───────────────────────────────────────────
+  // Validates stored token with backend before restoring session.
+  // Prevents UI leak from manually edited sessionStorage.
+  useEffect(() => {
+    const validateStoredSession = async () => {
+      const savedToken = sessionStorage.getItem('alphabag_token');
+
+      if (!savedToken) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Set token for the validation request
+        api.defaults.headers.common['Authorization'] = `Bearer ${savedToken}`;
+
+        const res = await api.get('/api/auth/me');
+
+        if (res.data && res.data.isAdmin) {
+          // Backend confirmed admin status — safe to restore
+          setUser(res.data);
+          setToken(savedToken);
+          console.log('[AUTH] Admin session validated and restored for:', res.data.email || res.data.id);
+        } else {
+          // Token valid but not admin, or user no longer admin — clear session
+          console.warn('[AUTH] Stored session invalid or user is not admin. Clearing.');
+          sessionStorage.removeItem('alphabag_user');
+          sessionStorage.removeItem('alphabag_token');
+          delete api.defaults.headers.common['Authorization'];
+        }
+      } catch (err: any) {
+        // Token expired, invalid, or backend error — clear everything
+        console.error('[AUTH] Session validation failed:', err?.response?.data?.error || err.message);
+        sessionStorage.removeItem('alphabag_user');
+        sessionStorage.removeItem('alphabag_token');
+        delete api.defaults.headers.common['Authorization'];
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    validateStoredSession();
+  }, []);
+
   const siweLogin = async (address: string, signature: string, message: string) => {
     try {
       const refCode = sessionStorage.getItem('alphabag_ref_code');
-      
+
       const res = await api.post('/api/auth/siwe', { 
         address, 
         signature, 
@@ -54,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(res.data.token);
         sessionStorage.setItem('alphabag_token', res.data.token);
         sessionStorage.setItem('alphabag_user', JSON.stringify(res.data.user));
+        api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
         return true;
       }
       return false;
@@ -82,6 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(res.data.token);
         sessionStorage.setItem('alphabag_token', res.data.token);
         sessionStorage.setItem('alphabag_user', JSON.stringify(res.data.user));
+        api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
         setIsLoading(false);
         return true;
       }
@@ -92,37 +146,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  useEffect(() => {
-    const savedUserStr = sessionStorage.getItem('alphabag_user');
-    const savedToken = sessionStorage.getItem('alphabag_token');
-    if (savedUserStr && savedToken) {
-      try {
-        const savedUser = JSON.parse(savedUserStr);
-        if (savedUser.isAdmin) {
-          setUser(savedUser);
-          setToken(savedToken);
-          console.log("Admin session restored for:", savedUser.email || savedUser.id);
-        } else {
-          sessionStorage.removeItem('alphabag_user');
-          sessionStorage.removeItem('alphabag_token');
-        }
-      } catch (e) {
-        console.error("Failed to parse saved user — clearing corrupt session.");
-        sessionStorage.removeItem('alphabag_user');
-        sessionStorage.removeItem('alphabag_token');
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      setIsLoading(false);
-    }
-  }, []);
-
   const logout = () => {
     setToken(null);
     setUser(null);
     sessionStorage.removeItem('alphabag_token');
     sessionStorage.removeItem('alphabag_user');
+    delete api.defaults.headers.common['Authorization'];
     disconnect();
   };
 
@@ -135,6 +164,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setToken(res.data.token);
         sessionStorage.setItem('alphabag_user', JSON.stringify(res.data.user));
         sessionStorage.setItem('alphabag_token', res.data.token);
+        api.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
         return res.data.user.tier === 'ULTIMATE';
       }
       return false;
