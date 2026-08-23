@@ -22,37 +22,24 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
   const { disconnect } = useDisconnect();
 
-  // Token Balance check for Pro status
   const tokenAddress = TOKEN_GATING_CONFIG.BAG_TOKEN_ADDRESS_TESTNET || TOKEN_GATING_CONFIG.BAG_TOKEN_ADDRESS_MAINNET || '0x0000000000000000000000000000000000000000';
   
-  const { data: bagBalance } = useBalance({
+  useBalance({
     address: address,
     token: tokenAddress as `0x${string}`,
     chainId: bsc.id,
     watch: true
   });
 
-  // Beta period: auto-grant ULTIMATE to all users on first login
-  useEffect(() => {
-    if (user && !user.isPro) {
-      const updatedUser = { ...user, isPro: true, tier: 'ULTIMATE' as const };
-      setUser(updatedUser);
-      sessionStorage.setItem('alphabag_user', JSON.stringify(updatedUser));
-    }
-  }, [user?.id]); // Only re-run when the user identity changes, not every state update
-
-  // Admin status is evaluated entirely on the server side via JWT roles.
   const siweLogin = async (address: string, signature: string, message: string) => {
     try {
-      // Get referral code if exists
       const refCode = sessionStorage.getItem('alphabag_ref_code');
       
       const res = await api.post('/api/auth/siwe', { 
@@ -87,17 +74,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
         portal,
-        // See ADMIN_PORTAL_KEY on the backend (config/env.js) — required
-        // for portal:'admin' logins. NOTE: because this app is a static
-        // SPA with no server of its own, this value is still visible in
-        // this app's own compiled JS bundle to anyone who inspects it
-        // directly. It raises the bar (an attacker needs to specifically
-        // find and inspect this admin panel, not just the main public
-        // frontend, where the 'admin' portal string alone is already
-        // visible) but it does NOT replace restricting this admin panel's
-        // hosting to a known host/IP range or VPN — that still needs to
-        // be configured at the infrastructure level for this check to
-        // mean anything against a targeted attacker.
         adminPortalKey: import.meta.env.VITE_ADMIN_PORTAL_KEY,
       });
 
@@ -117,7 +93,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // RESTORE SESSION (Both Prod & Dev)
     const savedUserStr = sessionStorage.getItem('alphabag_user');
     const savedToken = sessionStorage.getItem('alphabag_token');
     if (savedUserStr && savedToken) {
@@ -128,7 +103,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setToken(savedToken);
           console.log("Admin session restored for:", savedUser.email || savedUser.id);
         } else {
-          // Non-admin session has no place in this decoupled Admin UI
           sessionStorage.removeItem('alphabag_user');
           sessionStorage.removeItem('alphabag_token');
         }
@@ -142,7 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       setIsLoading(false);
     }
-  }, []); // Run only once on mount
+  }, []);
 
   const logout = () => {
     setToken(null);
@@ -154,10 +128,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const upgradeToUltimate = async (walletAddress: string): Promise<boolean> => {
     if (!user) return false;
-    const updatedUser: User = { ...user, tier: 'ULTIMATE', verifiedWallet: walletAddress };
-    setUser(updatedUser);
-    sessionStorage.setItem('alphabag_user', JSON.stringify(updatedUser));
-    return true;
+    try {
+      const res = await api.post('/api/auth/verify-upgrade', { walletAddress });
+      if (res.data?.user && res.data?.token) {
+        setUser(res.data.user);
+        setToken(res.data.token);
+        sessionStorage.setItem('alphabag_user', JSON.stringify(res.data.user));
+        sessionStorage.setItem('alphabag_token', res.data.token);
+        return res.data.user.tier === 'ULTIMATE';
+      }
+      return false;
+    } catch (e: any) {
+      console.error('[AUTH] Upgrade verification failed:', e?.response?.data || e.message);
+      throw e;
+    }
   };
 
   const updateAiUsage = (seconds: number) => {
@@ -178,18 +162,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-
   const completeOnboarding = async (accountType: 'FOUNDER' | 'TRADER', profileData: any) => {
     if (!user) return;
-    
-    // Simulate API update
     const updatedUser = { 
       ...user, 
       accountType, 
       onboardingComplete: true,
-      // In a real app, profileData would be saved to DB/linked Project
     };
-    
     setUser(updatedUser);
     sessionStorage.setItem('alphabag_user', JSON.stringify(updatedUser));
   };
