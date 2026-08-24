@@ -18,6 +18,7 @@ import { AdminWhales } from '../../components/admin/AdminWhales';
 import { AdminSeoAeo } from '../../components/admin/AdminSeoAeo';
 
 export const Admin: React.FC = () => {
+  const fetchAbortRef = React.useRef<AbortController | null>(null);
     const { user, token } = useAuth();
     const location = useLocation();
 
@@ -50,6 +51,12 @@ export const Admin: React.FC = () => {
     };
 
     useEffect(() => {
+    return () => {
+      if (fetchAbortRef.current) fetchAbortRef.current.abort();
+    };
+  }, []);
+
+  useEffect(() => {
         fetchAllData();
         const interval = setInterval(fetchAllData, 30000);
         return () => clearInterval(interval);

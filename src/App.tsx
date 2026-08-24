@@ -63,9 +63,7 @@ const AppContent = () => {
 function App() {
   // Solana config
   const network = WalletAdapterNetwork.Mainnet;
-  const endpoint = import.meta.env.VITE_ALCHEMY_API_KEY 
-    ? `https://solana-mainnet.g.alchemy.com/v2/${import.meta.env.VITE_ALCHEMY_API_KEY}`
-    : clusterApiUrl(network);
+  const endpoint = clusterApiUrl(network);
     
   const wallets = [new PhantomWalletAdapter()];
 

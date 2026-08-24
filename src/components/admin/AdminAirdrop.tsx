@@ -1,3 +1,5 @@
+import DOMPurify from 'dompurify';
+const sanitize = (text: string) => DOMPurify.sanitize(text || '', { ALLOWED_TAGS: [] });
 import React, { useState, useEffect } from 'react';
 import { api } from '../../services/api';
 import { Button } from '../ui/Button';
@@ -385,8 +387,8 @@ export const AdminAirdrop: React.FC = () => {
                 const awardBtn = document.getElementById('btn-award');
                 const deductBtn = document.getElementById('btn-deduct');
                 
-                awardBtn?.addEventListener('click', () => Swal.clickConfirm());
-                deductBtn?.addEventListener('click', () => Swal.clickDeny());
+                awardBtn?.addEventListener('click', () => Swal.clickConfirm(), { once: true });
+                deductBtn?.addEventListener('click', () => Swal.clickDeny(), { once: true });
             }
         });
 
@@ -486,9 +488,13 @@ export const AdminAirdrop: React.FC = () => {
         let csvContent = "data:text/csv;charset=utf-8,Account ID/Email,BSC Wallet,ITEMS,Converted BAG,Referrals,Tier,Feedback\n";
         const rate = parseFloat(itemsToBagRate) || 10;
         participants.forEach(p => {
-            const wallet = p.wallet || p.submittedWallet || 'NOT SUBMITTED';
-            const feedback = p.reviewComment ? p.reviewComment.replace(/"/g, '""') : '';
-            const convertedBAG = Number((p.points || 0) / rate).toFixed(2);
+            let wallet = p.wallet || p.submittedWallet || 'NOT SUBMITTED';
+            let feedback = p.reviewComment ? p.reviewComment.replace(/"/g, '""') : '';
+            // Sanitize formula injection
+      if (/^[+=@-]/.test(wallet)) wallet = "'" + wallet;
+      if (/^[+=@-]/.test(feedback)) feedback = "'" + feedback;
+      if (/^[+=@-]/.test(email)) email = "'" + email;
+      const convertedBAG = Number((p.points || 0) / rate).toFixed(2);
             csvContent += `"${p.email || p.id}","${wallet}",${p.points},${convertedBAG},${p.referralCount},${p.accountType},"${feedback}"\n`;
         });
         const encodedUri = encodeURI(csvContent);
