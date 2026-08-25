@@ -5,6 +5,7 @@ import { bsc } from 'wagmi/chains';
 import { useWeb3Modal } from '@web3modal/wagmi/react';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../ui/Button';
+import { TOKEN_GATING_CONFIG } from '../../services/config';
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -12,10 +13,20 @@ interface UpgradeModalProps {
 }
 
 
-// Token gating environment configuration
-const BAG_TOKEN_ADDRESS = '0x12a5b616d0042456345ec46682cf8c105658e0a1';
-const MIN_HOLDINGS = 0;
-const TOKEN_GATE_ACTIVE = import.meta.env.VITE_TOKEN_GATE_ACTIVE === 'true';
+// Token gating configuration — sourced from the same env-driven config the
+// frontend repo uses (TOKEN_GATING_CONFIG), mirroring the fix already
+// applied there (frontend/src/components/frontend/UpgradeModal.tsx).
+// This component was a stale duplicate: it hardcoded a different BAG
+// token address and used a fake setTimeout "simulation" instead of a real
+// balance check. Keeping this in sync with the frontend repo's copy
+// matters — the backend's /api/auth/verify-upgrade re-verifies the
+// balance on-chain regardless, but a stale client-side check here still
+// misleads users about their actual eligibility.
+const BAG_TOKEN_ADDRESS =
+  TOKEN_GATING_CONFIG.BAG_TOKEN_ADDRESS_MAINNET ||
+  TOKEN_GATING_CONFIG.BAG_TOKEN_ADDRESS_TESTNET ||
+  '0x0000000000000000000000000000000000000000';
+const MIN_HOLDINGS = TOKEN_GATING_CONFIG.MIN_BAG_REQUIRED;
 
 export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) => {
   const { open } = useWeb3Modal();
@@ -72,11 +83,24 @@ export const UpgradeModal: React.FC<UpgradeModalProps> = ({ isOpen, onClose }) =
         }
       }
 
-      // 2. Check Balance (Simulation for Demo)
-      await new Promise(r => setTimeout(r, 1500));
+      // 2. Check Balance — this must reflect a real on-chain read, not a
+      // fixed delay. `tokenBalance` comes from wagmi's useBalance against
+      // BAG_TOKEN_ADDRESS above. If MIN_HOLDINGS is configured (> 0) and the
+      // wallet doesn't meet it, stop here instead of upgrading anyway.
+      const currentBalance = Number(tokenBalance?.formatted || 0);
+      if (MIN_HOLDINGS > 0 && currentBalance < MIN_HOLDINGS) {
+        throw new Error(
+          `Insufficient BAG balance. You have ${currentBalance.toFixed(2)}, need ${MIN_HOLDINGS}.`
+        );
+      }
 
-      // 3. Upgrade
-      await upgradeToUltimate(address);
+      // 3. Upgrade — the backend independently re-verifies the balance
+      // on-chain before issuing an Ultimate-tier session; a client-reported
+      // balance is never trusted for the actual grant.
+      const upgraded = await upgradeToUltimate(address);
+      if (!upgraded) {
+        throw new Error('Verification failed. The server could not confirm your BAG balance.');
+      }
       onClose();
     } catch (e: any) {
       console.error("Verification Failed", e);

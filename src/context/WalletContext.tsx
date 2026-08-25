@@ -274,16 +274,23 @@ export const WalletProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
       setPortfolioItems(Array.from(aggregated.values()));
 
-      // Check for BAG token with STRICT Contract Address Validation
-      // Since no contract is deployed yet, we use a placeholder that won't match anything, ensuring safety.
-      const BAG_CONTRACT_ADDRESS = ''; // TODO: Update this when contract is deployed (e.g., '0x...')
+      // Check for BAG token holdings. Address comes from env-driven
+      // TOKEN_GATING_CONFIG (single source of truth, same one the backend
+      // and frontend use) — this used to compare against a hardcoded
+      // testnet/placeholder address here, which would silently go stale
+      // the moment the real BAG token address changes anywhere else.
+      const BAG_CONTRACT_ADDRESS = (
+        TOKEN_GATING_CONFIG.BAG_TOKEN_ADDRESS_MAINNET ||
+        TOKEN_GATING_CONFIG.BAG_TOKEN_ADDRESS_TESTNET ||
+        ''
+      ).toLowerCase();
 
-      const bagToken = Array.from(aggregated.values()).find(i => {
-        const coinIdStr = String(i.coinId || '');
-        const BAG_TOKEN_ADDRESS = '0x12a5b616d0042456345ec46682cf8c105658e0a1';
-        return i.symbol === 'BAG' &&
-          (coinIdStr.toLowerCase() === BAG_TOKEN_ADDRESS.toLowerCase());
-      });
+      const bagToken = BAG_CONTRACT_ADDRESS
+        ? Array.from(aggregated.values()).find(i => {
+            const coinIdStr = String(i.coinId || '');
+            return i.symbol === 'BAG' && coinIdStr.toLowerCase() === BAG_CONTRACT_ADDRESS;
+          })
+        : undefined;
 
       const bagBalance = bagToken ? bagToken.amount : 0;
       setPremiumTokenBalance(bagBalance);
