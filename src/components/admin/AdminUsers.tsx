@@ -32,7 +32,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ users, onRefresh }) => {
     const handleIssueStrike = async (userId: string, email: string) => {
         const result = await Swal.fire({
             title: 'ISSUE STRIKE',
-            html: `<p class="text-xs text-zinc-400">Issue a protocol violation strike to <strong class="text-white">${email}</strong>.<br/>At 5 strikes the account is permanently banned.</p>`,
+            text: `Issue a protocol violation strike to ${email}. At 5 strikes the account is permanently banned.`,
             input: 'text',
             inputPlaceholder: 'Reason for strike (optional)',
             inputAttributes: { style: 'background:#1a1a1a;color:white;border:1px solid #444;border-radius:8px;padding:10px;' },

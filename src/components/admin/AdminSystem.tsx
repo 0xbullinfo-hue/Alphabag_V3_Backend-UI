@@ -14,15 +14,15 @@ export const AdminSystem: React.FC<AdminSystemProps> = ({ onReboot }) => {
     const [isRebooting, setIsRebooting] = useState(false);
 
     const handleReboot = async () => {
-        if (!confirm("⚠️ NETWORK RESET WARNING ⚠️\n\nThis will flush all caches (Price, Portfolio, AI) and reset system state.\n\nAre you sure you want to RESTART?")) return;
+        if (!confirm("This action clears application caches. It does not restart the server. Continue?")) return;
 
         setIsRebooting(true);
         try {
-            await api.post('/api/admin/reboot', {});
-            alert(`✅ Hub Initialization Success`);
+            const res = await api.post('/api/admin/cache/flush', {});
+            alert(res.data?.message || 'Caches cleared.');
             onReboot(); // Trigger parent refresh
         } catch (error) {
-            alert("❌ Restart Failed: Network Unresponsive");
+            alert("Cache clear failed.");
         } finally {
             setIsRebooting(false);
         }

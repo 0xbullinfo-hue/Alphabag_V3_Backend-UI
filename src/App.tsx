@@ -1,3 +1,4 @@
+import AuditLog from './pages/admin/AuditLog';
 import React, { Suspense, lazy } from 'react';
 import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { WagmiConfig } from 'wagmi';
