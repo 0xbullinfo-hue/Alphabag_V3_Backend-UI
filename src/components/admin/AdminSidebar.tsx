@@ -84,6 +84,7 @@ export const AdminSidebar: React.FC = () => {
                         System
                     </div>
                     <NavItem to="/admin?view=system" icon={Activity} label="Server Health" active={currentView === 'system'} />
+                    <NavItem to="/admin?view=audit" icon={Shield} label="Audit Trail" active={currentView === 'audit'} />
                 </div>
             </div>
 

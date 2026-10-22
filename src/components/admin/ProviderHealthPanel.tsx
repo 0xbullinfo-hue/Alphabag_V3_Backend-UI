@@ -64,6 +64,12 @@ export const ProviderHealthPanel: React.FC = () => {
             <Clock size={11} className="mr-1" /> RATE LIMITED
           </span>
         );
+      case 'QUOTA_EXHAUSTED':
+        return (
+          <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 text-amber-400 border border-amber-500/30">
+            <AlertTriangle size={11} className="mr-1" /> QUOTA EXHAUSTED
+          </span>
+        );
       case 'AUTH_FAILED':
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500/10 text-red-400 border border-red-500/30">

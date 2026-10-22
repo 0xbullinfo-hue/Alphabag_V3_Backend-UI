@@ -16,6 +16,7 @@ import { AdminSystem } from '../../components/admin/AdminSystem';
 import { AdminAirdrop } from '../../components/admin/AdminAirdrop';
 import { AdminWhales } from '../../components/admin/AdminWhales';
 import { AdminSeoAeo } from '../../components/admin/AdminSeoAeo';
+import AuditLog from './AuditLog';
 
 export const Admin: React.FC = () => {
   const fetchAbortRef = React.useRef<AbortController | null>(null);
@@ -84,6 +85,8 @@ export const Admin: React.FC = () => {
                 return <AdminSeoAeo />;
             case 'system':
                 return <AdminSystem onReboot={fetchAllData} />;
+            case 'audit':
+                return <AuditLog />;
             default:
                 return <AdminOverview stats={stats} registeredCount={users.length} activeCount={activeCount} />;
         }
@@ -108,6 +111,7 @@ export const Admin: React.FC = () => {
                                                 currentView === 't2e' ? 'T2E Infrastructure' :
                                                     currentView === 'whales' ? 'Whale Watch' :
                                                         currentView === 'seo' ? 'SEO + AEO Operations' :
+                                                        currentView === 'audit' ? 'Protocol Audit Trail' :
                                                         'System Integrity'}
                             </h1>
                             <p className="text-alphabag-subtext mt-0.5 text-[12px] font-bold tracking-wide">
