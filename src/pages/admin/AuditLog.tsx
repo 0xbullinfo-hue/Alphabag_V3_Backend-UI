@@ -58,7 +58,7 @@ export const AuditLog: React.FC = () => {
           </div>
         )}
 
-        {error && (
+        {!!error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 text-red-400 text-xs flex items-center justify-between">
             <span>Failed to synchronize audit records from server.</span>
             <Button size="sm" variant="danger" onClick={() => refetch()}>Retry</Button>

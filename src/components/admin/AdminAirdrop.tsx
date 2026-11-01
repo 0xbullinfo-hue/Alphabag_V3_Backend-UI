@@ -489,13 +489,14 @@ export const AdminAirdrop: React.FC = () => {
         const rate = parseFloat(itemsToBagRate) || 10;
         participants.forEach(p => {
             let wallet = p.wallet || p.submittedWallet || 'NOT SUBMITTED';
+            let email = p.email || p.id;
             let feedback = p.reviewComment ? p.reviewComment.replace(/"/g, '""') : '';
             // Sanitize formula injection
       if (/^[+=@-]/.test(wallet)) wallet = "'" + wallet;
       if (/^[+=@-]/.test(feedback)) feedback = "'" + feedback;
-      if (/^[+=@-]/.test(email)) email = "'" + email;
+    if (/^[+=@-]/.test(email)) email = "'" + email;
       const convertedBAG = Number((p.points || 0) / rate).toFixed(2);
-            csvContent += `"${p.email || p.id}","${wallet}",${p.points},${convertedBAG},${p.referralCount},${p.accountType},"${feedback}"\n`;
+            csvContent += `"${email}","${wallet}",${p.points},${convertedBAG},${p.referralCount},${p.accountType},"${feedback}"\n`;
         });
         const encodedUri = encodeURI(csvContent);
         const link = document.createElement("a");
@@ -1022,7 +1023,7 @@ export const AdminAirdrop: React.FC = () => {
                                                 <td className="p-6">
                                                     {a.feedback ? (
                                                         <button 
-                                                            onClick={() => Swal.fire({ title: 'Task Feedback', text: a.feedback, background: '#0a0a0a', color: '#fff', confirmButtonColor: '#fcd535' })}
+                                                            onClick={() => Swal.fire({ title: 'Task Feedback', text: a.feedback || '', background: '#0a0a0a', color: '#fff', confirmButtonColor: '#fcd535' })}
                                                             className="text-[10px] text-alphabag-yellow hover:underline text-left max-w-[150px] truncate block"
                                                         >
                                                             {a.feedback}
@@ -1095,15 +1096,15 @@ export const AdminAirdrop: React.FC = () => {
                                                 </td>
                                                 <td className="p-6 text-right">
                                                     <div className="flex gap-2 justify-end">
-                                                        <button onClick={() => handleGrantBonus(p.id, p.wallet)} className="px-3 py-1 bg-alphabag-yellow text-black rounded-lg text-[9px] font-black uppercase tracking-widest">
+                                                        <button onClick={() => handleGrantBonus(p.id, p.wallet || '')} className="px-3 py-1 bg-alphabag-yellow text-black rounded-lg text-[9px] font-black uppercase tracking-widest">
                                                             BONUS
                                                         </button>
                                                         {p.isBanned ? (
-                                                            <button onClick={() => handleUnbanUser(p.id, p.wallet)} className="px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg text-[9px] font-black uppercase">
+                                                            <button onClick={() => handleUnbanUser(p.id, p.wallet || '')} className="px-3 py-1 bg-green-500/20 text-green-400 border border-green-500/30 rounded-lg text-[9px] font-black uppercase">
                                                                 UNBAN
                                                             </button>
                                                         ) : (
-                                                            <button onClick={() => handleIssueStrike(p.id, p.wallet)} className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-[9px] font-black uppercase">
+                                                            <button onClick={() => handleIssueStrike(p.id, p.wallet || '')} className="px-3 py-1 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-[9px] font-black uppercase">
                                                                 STRIKE
                                                             </button>
                                                         )}
@@ -1165,7 +1166,7 @@ export const AdminAirdrop: React.FC = () => {
                                 <div key={i} className="bg-black/40 border border-white/5 rounded-2xl p-6 relative overflow-hidden group hover:border-blue-500/30 transition-all flex flex-col">
                                     <div className="absolute top-0 right-0 p-4">
                                         <button 
-                                            onClick={() => handleApproveFounder(p.id, p.isFounderAirdrop)}
+                                            onClick={() => handleApproveFounder(p.id, Boolean(p.isFounderAirdrop))}
                                             className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${p.isFounderAirdrop ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-blue-600 text-white'}`}
                                         >
                                             {p.isFounderAirdrop ? 'REVOKE STATUS' : 'APPROVE FOUNDER'}

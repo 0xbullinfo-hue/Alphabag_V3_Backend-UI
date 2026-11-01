@@ -1,8 +1,8 @@
 import React from 'react';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 
-const variants = {
+const variants: Variants = {
   initial: { opacity: 0, y: 15, scale: 0.99 },
   enter: { 
     opacity: 1, 
@@ -10,7 +10,7 @@ const variants = {
     scale: 1,
     transition: {
       duration: 0.4,
-      ease: [0.16, 1, 0.3, 1], // Premium smooth easing
+      ease: [0.16, 1, 0.3, 1] as const,
       when: "beforeChildren",
     }
   },
@@ -20,7 +20,7 @@ const variants = {
     scale: 0.99,
     transition: {
       duration: 0.3,
-      ease: [0.7, 0, 0.84, 0]
+      ease: [0.7, 0, 0.84, 0] as const
     }
   }
 };
