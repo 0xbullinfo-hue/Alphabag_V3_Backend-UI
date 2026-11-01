@@ -10,6 +10,7 @@ export const AdminSignals: React.FC = () => {
     const { token } = useAuth();
     const [signals, setSignals] = useState<TradeSignal[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [pendingSignalAction, setPendingSignalAction] = useState<string | null>(null);
 
     const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -108,20 +109,26 @@ export const AdminSignals: React.FC = () => {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this signal?')) return;
+        setPendingSignalAction(`${id}:delete`);
         try {
             await api.delete(`/api/admin/signals/${id}`);
-            fetchSignals();
+            await fetchSignals();
         } catch (error) {
             alert('Failed to delete');
+        } finally {
+            setPendingSignalAction(null);
         }
     };
 
     const handleStatusUpdate = async (id: string, newStatus: string) => {
+        setPendingSignalAction(`${id}:${newStatus}`);
         try {
             await api.put(`/api/admin/signals/${id}`, { status: newStatus });
-            fetchSignals();
+            await fetchSignals();
         } catch (error) {
             alert('Failed to update status');
+        } finally {
+            setPendingSignalAction(null);
         }
     };
 
@@ -290,7 +297,7 @@ export const AdminSignals: React.FC = () => {
                             )}
 
                             <div className="pt-4 flex justify-end">
-                                <Button type="submit" disabled={isLoading} className="bg-alphabag-yellow text-black font-black uppercase tracking-widest px-8 hover:bg-yellow-400">
+                                <Button type="submit" isLoading={isLoading} disabled={isLoading || pendingSignalAction !== null} className="bg-alphabag-yellow text-black font-black uppercase tracking-widest px-8 hover:bg-yellow-400">
                                     {editingId ? 'Update & Broadcast' : 'Publish Signal'}
                                 </Button>
                             </div>
@@ -337,14 +344,14 @@ export const AdminSignals: React.FC = () => {
                                         </div>
 
                                         <div className="flex gap-2 mt-3 pt-3 border-t border-alphabag-border">
-                                            <button onClick={() => handleStatusUpdate(s.id, 'HIT')} className="flex-1 text-[10px] py-2 bg-green-500/10 text-green-500 border border-green-500/20 rounded hover:bg-green-500 hover:text-black font-bold uppercase transition-colors">
-                                                Target Hit
+                                            <button type="button" disabled={pendingSignalAction !== null} aria-busy={pendingSignalAction === `${s.id}:HIT`} onClick={() => handleStatusUpdate(s.id, 'HIT')} className="flex-1 text-[10px] py-2 bg-green-500/10 text-green-500 border border-green-500/20 rounded hover:bg-green-500 hover:text-black font-bold uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                                {pendingSignalAction === `${s.id}:HIT` ? 'Updating...' : 'Target Hit'}
                                             </button>
-                                            <button onClick={() => handleStatusUpdate(s.id, 'LOSS')} className="flex-1 text-[10px] py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded hover:bg-red-500 hover:text-white font-bold uppercase transition-colors">
-                                                Stop Hit
+                                            <button type="button" disabled={pendingSignalAction !== null} aria-busy={pendingSignalAction === `${s.id}:LOSS`} onClick={() => handleStatusUpdate(s.id, 'LOSS')} className="flex-1 text-[10px] py-2 bg-red-500/10 text-red-500 border border-red-500/20 rounded hover:bg-red-500 hover:text-white font-bold uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                                {pendingSignalAction === `${s.id}:LOSS` ? 'Updating...' : 'Stop Hit'}
                                             </button>
-                                            <button onClick={() => handleDelete(s.id)} className="px-3 text-alphabag-subtext hover:text-red-500 hover:bg-red-500/10 rounded transition-colors">
-                                                <Trash2 size={14} />
+                                            <button type="button" disabled={pendingSignalAction !== null} aria-busy={pendingSignalAction === `${s.id}:delete`} onClick={() => handleDelete(s.id)} aria-label={`Delete ${s.pair} signal`} title="Delete signal" className="px-3 text-alphabag-subtext hover:text-red-500 hover:bg-red-500/10 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                                                {pendingSignalAction === `${s.id}:delete` ? <span className="text-[10px]">Deleting</span> : <Trash2 size={14} />}
                                             </button>
                                         </div>
                                     </div>

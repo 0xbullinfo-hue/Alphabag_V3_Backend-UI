@@ -492,10 +492,10 @@ export const AdminAirdrop: React.FC = () => {
             let email = p.email || p.id;
             let feedback = p.reviewComment ? p.reviewComment.replace(/"/g, '""') : '';
             // Sanitize formula injection
-      if (/^[+=@-]/.test(wallet)) wallet = "'" + wallet;
-      if (/^[+=@-]/.test(feedback)) feedback = "'" + feedback;
-    if (/^[+=@-]/.test(email)) email = "'" + email;
-      const convertedBAG = Number((p.points || 0) / rate).toFixed(2);
+                        if (/^[+=@-]/.test(wallet)) wallet = "'" + wallet;
+                        if (/^[+=@-]/.test(feedback)) feedback = "'" + feedback;
+                        if (/^[+=@-]/.test(email)) email = "'" + email;
+                        const convertedBAG = Number((p.points || 0) / rate).toFixed(2);
             csvContent += `"${email}","${wallet}",${p.points},${convertedBAG},${p.referralCount},${p.accountType},"${feedback}"\n`;
         });
         const encodedUri = encodeURI(csvContent);
