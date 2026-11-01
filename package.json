@@ -9,7 +9,9 @@
   },
   "scripts": {
     "dev": "vite",
+    "prebuild": "node scripts/check-no-secrets.mjs --source-only",
     "build": "vite build",
+    "postbuild": "node scripts/check-no-secrets.mjs",
     "preview": "vite preview",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",

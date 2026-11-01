@@ -1,73 +1,61 @@
 import { TokenBalance, DefiPosition, Transaction } from '../types';
+import { api } from './api';
 
-const COVALENT_API_KEY = import.meta.env.VITE_COVALENT_API_KEY;
-const BASE_URL = 'https://api.covalenthq.com/v1';
+const CHAIN_NAMES: Record<number, string> = {
+    1: 'ethereum',
+    56: 'bsc',
+    137: 'polygon',
+    42161: 'arbitrum',
+    43114: 'avalanche',
+    8453: 'base',
+};
 
 export const chainData = {
     async getTransactionHistory(address: string, chainId: number = 1): Promise<Transaction[]> {
-        if (!COVALENT_API_KEY) return this._getMockTransactions(); // Allow attempt, fallback on error
         try {
-            const auth = btoa(`${COVALENT_API_KEY}:`);
-            const response = await fetch(
-                `${BASE_URL}/${chainId}/address/${address}/transactions_v2/`,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Basic ${auth}`
-                    }
-                }
-            );
-            if (!response.ok) {
-                const err = await response.text();
-                console.error(`Transaction fetch failed: ${response.status}`, err);
-                throw new Error(`Failed to fetch transactions: ${response.status}`);
-            }
-            const data = await response.json();
-            const items = data.data.items || [];
-
-            return items.map((item: any): Transaction => ({
-                id: item.tx_hash,
+            const response = await api.get(`/api/whales/address/${encodeURIComponent(address)}/transactions`, { params: { chainId } });
+            return (Array.isArray(response.data) ? response.data : []).map((item: any): Transaction => ({
+                id: item.hash,
                 type: 'TRANSFER', // Simplified for PoC
-                coin: 'ETH', // Placeholder, would need log parsing for actual token
+                coin: item.tokenSymbol || 'UNK',
                 price: 0,
-                amount: 0,
-                date: item.block_signed_at,
-                value: item.value_quote || 0,
-                hash: item.tx_hash,
-                from: item.from_address,
-                to: item.to_address,
-                fee: item.gas_quote || 0,
-                status: item.successful ? 'CONFIRMED' : 'FAILED',
-                chain: chainId === 56 ? 'BSC' : chainId === 1399811149 ? 'SOL' : 'ETH'
+                amount: Number(item.value) || 0,
+                date: new Date(Number(item.timeStamp) * 1000).toISOString(),
+                value: 0,
+                hash: item.hash,
+                from: item.from,
+                to: item.to,
+                fee: 0,
+                status: 'CONFIRMED',
+                chain: CHAIN_NAMES[chainId] || 'ethereum'
             }));
         } catch (e) {
-            console.error("Transaction Fetch Error - Using Mock Data", e);
-            return this._getMockTransactions();
+            console.warn('Transaction history is temporarily unavailable', e);
+            return [];
         }
     },
 
     async getBalances(address: string, chainId: number = 1): Promise<any[]> {
-        if (!COVALENT_API_KEY) return [];
+        const chain = CHAIN_NAMES[chainId];
+        if (!chain) return [];
         try {
-            const auth = btoa(`${COVALENT_API_KEY}:`);
-            const response = await fetch(
-                `${BASE_URL}/${chainId}/address/${address}/balances_v2/`,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Basic ${auth}`
-                    }
-                }
-            );
-            if (!response.ok) {
-                console.warn(`Balance fetch failed for chain ${chainId}: ${response.status}`);
-                return this._getMockBalances(chainId);
-            }
-            const data = await response.json();
-            return data.data.items || [];
+            const response = await api.get('/api/portfolio/balances', {
+                params: { address, chains: chain },
+            });
+            return (response.data?.tokens || []).map((token: any) => ({
+                contract_ticker_symbol: token.symbol,
+                contract_name: token.name,
+                contract_decimals: 0,
+                balance: token.balance,
+                contract_address: token.contractAddress,
+                logo_url: token.logo,
+                quote_rate: token.priceUSD || 0,
+                quote: token.valueUSD || 0,
+                chainId,
+            }));
         } catch (e) {
-            console.warn(`Balance Fetch Error (${chainId}) - Using Mock Data`, e);
-            return this._getMockBalances(chainId);
+            console.warn(`Balance data is temporarily unavailable (${chainId})`, e);
+            return [];
         }
     },
 

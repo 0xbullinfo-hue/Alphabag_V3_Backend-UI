@@ -127,7 +127,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         email,
         password,
         portal,
-        adminPortalKey: import.meta.env.VITE_ADMIN_PORTAL_KEY,
       });
 
       if (res.data.user && res.data.token) {

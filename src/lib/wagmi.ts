@@ -1,11 +1,11 @@
 import { createWeb3Modal, defaultWagmiConfig } from '@web3modal/wagmi/react';
 import { mainnet, bsc, polygon, arbitrum, base, avalanche } from 'wagmi/chains';
 
-// 1. Get projectId & Alchemy ID
+// 1. Get projectId; provider credentials remain server-side.
 // Web3Modal requires a valid 32-character hex string for projectId.
 // We provide a fallback dummy hex string to prevent fatal constructor errors if undefined.
 const projectId = import.meta.env.VITE_WALLETCONNECT_PROJECT_ID || '3fcc6bba31d50731f8f7c9e05e5d3b1e';
-const alchemyId = import.meta.env.VITE_ALCHEMY_API_KEY || '';
+const rpcBaseUrl = import.meta.env.VITE_API_BASE_URL || '';
 
 // 2. Create wagmiConfig
 const metadata = {
@@ -15,14 +15,14 @@ const metadata = {
   icons: ['https://s2.coinmarketcap.com/static/img/coins/64x64/1.png']
 };
 
-// Optimized Alchemy-powered chain configs
+// Route read-only chain requests through the backend RPC allowlist.
 const alchemyChains = [
-  { ...mainnet, rpcUrls: { ...mainnet.rpcUrls, default: { http: [`https://eth-mainnet.g.alchemy.com/v2/${alchemyId}`] } } },
-  { ...bsc, rpcUrls: { ...bsc.rpcUrls, default: { http: [`https://bnb-mainnet.g.alchemy.com/v2/${alchemyId}`] } } },
-  { ...polygon, rpcUrls: { ...polygon.rpcUrls, default: { http: [`https://polygon-mainnet.g.alchemy.com/v2/${alchemyId}`] } } },
-  { ...arbitrum, rpcUrls: { ...arbitrum.rpcUrls, default: { http: [`https://arb-mainnet.g.alchemy.com/v2/${alchemyId}`] } } },
-  { ...base, rpcUrls: { ...base.rpcUrls, default: { http: [`https://base-mainnet.g.alchemy.com/v2/${alchemyId}`] } } },
-  { ...avalanche, rpcUrls: { ...avalanche.rpcUrls, default: { http: [`https://avalanche-mainnet.g.alchemy.com/v2/${alchemyId}`] } } }
+  { ...mainnet, rpcUrls: { ...mainnet.rpcUrls, default: { http: [`${rpcBaseUrl}/api/rpc/ethereum`] } } },
+  { ...bsc, rpcUrls: { ...bsc.rpcUrls, default: { http: [`${rpcBaseUrl}/api/rpc/bsc`] } } },
+  { ...polygon, rpcUrls: { ...polygon.rpcUrls, default: { http: [`${rpcBaseUrl}/api/rpc/polygon`] } } },
+  { ...arbitrum, rpcUrls: { ...arbitrum.rpcUrls, default: { http: [`${rpcBaseUrl}/api/rpc/arbitrum`] } } },
+  { ...base, rpcUrls: { ...base.rpcUrls, default: { http: [`${rpcBaseUrl}/api/rpc/base`] } } },
+  { ...avalanche, rpcUrls: { ...avalanche.rpcUrls, default: { http: [`${rpcBaseUrl}/api/rpc/avalanche`] } } }
 ];
 
 const chains = alchemyChains;
